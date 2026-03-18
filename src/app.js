@@ -41,7 +41,6 @@ app.use(express.urlencoded({ extended: true }));
 // ── Rutas ────────────────────────────────────────────────────────────────────
 app.use('/', discoveryRoutes);
 app.use('/', oauthRoutes);
-app.use('/', badgeConnectRoutes);
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
@@ -55,6 +54,8 @@ app.get('/health', (req, res) => {
     public_url:  publicUrl
   });
 });
+
+app.use('/', badgeConnectRoutes);  // ← ahora va después
 
 // ── Landing page ─────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
