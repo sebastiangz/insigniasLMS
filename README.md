@@ -1,202 +1,237 @@
-# LMS Open Badges 2.1 — Backpack Server
+# Backpack LMS — Open Badges 2.1
 
-Un servidor de **mochila (backpack)** propio, compatible con el estándar **Open Badges 2.1 / Badge Connect®**, diseñado para registrarse directamente en un LMS cómo moodle 4.x como un backpack externo.
+Servidor de **mochila (backpack)** institucional compatible con **Open Badges 2.1 / Badge Connect®**, diseñado para integrarse con Moodle 4.x como backpack externo.
 
-LMS cómo moodle ya emite insignias internamente (por calificaciones, actividades, criterios manuales, etc.). Este servidor es el lugar donde los estudiantes almacenan esas insignias de forma portátil y verificable, sin depender de servicios externos como Badgr.
-
----
-
-## Cómo encaja en Moodle
-
-```
-┌─────────────────────┐        Badge Connect®           ┌──────────────────────┐
-│       Moodle        │  (OAuth 2 + REST)               │   Este Backpack      │
-│                     │ ──────────────────────────────▶ │                      │
-│  Emite badges según │                                 │  Almacena las badges │
-│  calificaciones,    │ ◀────────────────────────────── │  que los estudiantes │
-│  criterios, roles   │   pull (GET /assertions)        │  "push" desde Moodle │
-│  de curso, etc.     │                                 │                      │
-│                     │  El estudiante hace:            │  Soporta:            │
-│                     │  Preferencias → Badges →        │  • Push desde Moodle │
-│                     │  Configuración mochila →        │  • Pull hacia Moodle │
-│                     │  "Conectar"                     │  • Colecciones       │
-└─────────────────────┘                                └──────────────────────┘
-```
-
-### Flujo paso a paso (desde la perspectiva del estudiante)
-
-1. El administrador registra este backpack en Moodle (ver abajo).
-2. El estudiante va a **Preferencias → Badges → Configuración de mochila**.
-3. Selecciona este backpack como proveedor y clica **"Conectar a mochila"**.
-4. Moodle redirige al endpoint `/oauth/authorize` de este servidor.
-5. El estudiante introduce su correo y clica **"Permitir acceso"**.
-6. Se completa el OAuth dance y Moodle guarda los tokens.
-7. Ahora cuando el estudiante clica el icono de mochila junto a una badge en Moodle, esta hace un `POST /ob/v2p1/assertions` aquí.
-8. La badge queda almacenada y Moodle puede leerla de vuelta con `GET /ob/v2p1/assertions`.
+**InfraestructuraGIS + Universidad de Colima**
 
 ---
 
-## Requisitos
+## ¿Qué hace?
 
-- **Node.js 18+**
-- Un dominio público con HTTPS (ejemplo: `backpack.infraestructuragis.com`)
-- Moodle 4.0+ (tiene soporte nativo de Open Badges 2.1)
-- Puerto 3001 (configurable) habilitado en el firewall
+Moodle ya emite insignias internamente. Este servidor es donde los estudiantes **almacenan esas insignias de forma portátil y verificable**, sin depender de servicios externos como Badgr.
 
-No necesitas una base de datos externa: usa **SQLite** (archivo local, cero configuración).
+```
+┌─────────────────────┐   Badge Connect® (OAuth 2 + REST)   ┌─────────────────────┐
+│       Moodle        │ ─────────────────────────────────▶  │   Este Backpack     │
+│ educacioncontinua.  │                                      │ backpack.infraes-   │
+│      ucol.mx        │ ◀───────────────────────────────── │ tructuragis.com     │
+│                     │   GET /ob/v2p1/assertions            │                     │
+│  Emite badges por   │                                      │  Almacena badges    │
+│  calificaciones,    │   El estudiante:                     │  que el estudiante  │
+│  criterios, roles   │   Preferencias → Badges →           │  "push" desde Moodle│
+└─────────────────────┘   "Conectar mochila"                 └─────────────────────┘
+```
+
+---
+
+## Requisitos del servidor
+
+| Componente | Versión |
+|---|---|
+| Sistema | Fedora Server 42 |
+| Node.js | 18+ (instalado: v22.11.0) |
+| Apache httpd | Con mod_proxy, mod_ssl |
+| Proceso manager | PM2 |
+| Base de datos | SQLite (incluida, sin configuración extra) |
+| Directorio | `/home2/backpacklms` |
+| Usuario | `sgonzalez` |
 
 ---
 
 ## Instalación
 
-```bash
-# 1. Clonar / copiar los archivos del servidor
-cp -r backpack-server /var/www/backpack
-cd /var/www/backpack
+### 1. Clonar el repositorio
 
-# 2. Instalar dependencias
+```bash
+sudo mkdir -p /home2/backpacklms
+sudo chown -R sgonzalez:sgonzalez /home2/backpacklms
+git clone https://github.com/sebastiangz/insigniasLMS.git /home2/backpacklms
+cd /home2/backpacklms
+```
+
+### 2. Instalar dependencias
+
+```bash
 npm install
-
-# 3. Copiar y editar variables de entorno
-cp .env.example .env
-nano .env          # ← ver sección "Variables de entorno" abajo
-
-# 4. Arrancar (desarrollo)
-npm run dev
-
-# 4b. Arrancar (producción — sin auto-restart)
-npm start
 ```
 
-### Producción con PM2
+### 3. Configurar el entorno
 
 ```bash
-npm install -g pm2
-pm2 start src/app.js --name "backpack"
+# Opción A: asistente interactivo (recomendado primera vez)
+npm run setup
+
+# Opción B: copiar y editar manualmente
+cp .env.example .env
+nano .env
+```
+
+Variables clave en `.env`:
+
+```bash
+PORT=3100
+PUBLIC_URL=https://backpack.infraestructuragis.com
+DB_PATH=/home2/backpacklms/data/backpack.db
+JWT_SECRET=<genera con: openssl rand -hex 48>
+MOODLE_ORIGIN=https://educacioncontinua.ucol.mx
+```
+
+### 4. Instalar y configurar PM2
+
+```bash
+sudo npm install -g pm2
+pm2 start src/app.js --name backpack-lms
 pm2 save
-pm2 startup          # para que arranque al reiniciar el servidor
+pm2 startup   # ejecuta el comando que te muestre
 ```
 
-### Variables de entorno (`.env`)
+### 5. Configurar Apache
 
-| Variable | Ejemplo | Descripción |
-|---|---|---|
-| `PORT` | `3001` | Puerto en que escucha el servidor |
-| `PUBLIC_URL` | `https://backpack.dominio` | URL pública **sin** trailing slash. Aparece en los JSON de Open Badges |
-| `DB_PATH` | `./data/backpack.db` | Ruta al archivo SQLite |
-| `JWT_SECRET` | `(genera uno)` | Secreto para firmar tokens. Genera con: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
-| `ACCESS_TOKEN_TTL` | `3600` | Vida del access_token en segundos |
-| `REFRESH_TOKEN_TTL` | `2592000` | Vida del refresh_token (30 días) |
-| `ALLOW_DYNAMIC_REGISTRATION` | `true` | Si es `true`, cualquier Consumer puede registrarse automáticamente |
-| `MOODLE_ORIGIN` | `https://dominio` | URL de tu LMS, para CORS |
+```bash
+sudo cp apache-vhost-backpack.conf /etc/httpd/conf.d/backpack.infraestructuragis.com.conf
+sudo apachectl configtest
+sudo setsebool -P httpd_can_network_connect 1   # SELinux
+sudo systemctl reload httpd
+```
 
----
+### 6. Obtener certificado SSL
 
-## Nginx (reverse proxy recomendado)
+```bash
+sudo dnf install -y certbot python3-certbot-apache
+sudo certbot --apache -d backpack.infraestructuragis.com
+```
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name backpack.dominio;
+### 7. Verificar
 
-    ssl_certificate     /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
+```bash
+curl http://127.0.0.1:3100/health
+# {"status":"ok","service":"Backpack LMS",...}
 
-    location / {
-        proxy_pass       http://127.0.0.1:3001;
-        proxy_set_header Host        $host;
-        proxy_set_header X-Real-IP   $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+curl https://backpack.infraestructuragis.com/health
 ```
 
 ---
 
-## Registrar el backpack en Moodle
+## Registrar en Moodle (admin)
 
-Esto es lo que hace el administrador de Moodle **una sola vez**:
+1. **Admin → Servidor → Servicios OAuth 2**
+   - Tipo: Open Badges
+   - Service base URL: `https://backpack.infraestructuragis.com`
+   - Dejar Client ID y secret vacíos (se generan automáticamente)
 
-1. **Administración del sitio → Servidor → Servicios OAuth 2**
-   - Crear un nuevo servicio de tipo **Open Badges**.
-   - **Service base URL:** `https://backpack.dominio`
-   - Dejar `Client ID` y `Client secret` vacíos (se generan automáticamente al crear el backpack si tienes registro dinámico habilitado).
+2. **Admin → Badges → Gestionar mochila**
+   - Backpack URL: `https://backpack.infraestructuragis.com`
+   - API URL: `https://backpack.infraestructuragis.com`
+   - Versión: Open Badges v2.1
+   - Servicio OAuth 2: (el del paso anterior)
 
-2. **Administración del sitio → Badges → Gestionar mochila**
-   - Clicar **"Agregar una nueva mochila"**.
-   - **Backpack URL:** `https://backpack.dominio`
-   - **Backpack API URL:** `https://backpack.dominio`
-   - **Versión API soportada:** Open Badges v2.1
-   - **Servicio OAuth 2:** seleccionar el que creaste en el paso anterior.
-   - Guardar.
-
-3. Moodle hará automáticamente:
-   - `GET https://backpack.dominio/.well-known/badgeconnect.json` → obtiene el manifest.
-   - `POST https://backpack.dominio/register` → se registra como Consumer y recibe su `client_id` y `client_secret`.
-
-4. **Verificar:** Ve a **Administración → Badges → Configuración de badges** y confirma que aparezca tu backpack en la lista.
+Moodle descarga el manifest y se registra solo.
 
 ---
 
-## Endpoints del servidor
+## Uso para estudiantes
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/.well-known/badgeconnect.json` | Manifest del Badge Connect (Moodle lo descarga al registrar el backpack) |
-| `POST` | `/register` | Dynamic Client Registration (RFC 7591) |
-| `GET` | `/oauth/authorize` | Pantalla de consentimiento del usuario |
-| `POST` | `/oauth/consent` | Procesa el formulario de consentimiento |
-| `POST` | `/oauth/token` | Intercambia code→tokens o refresh_token→nuevos tokens |
-| `GET` | `/ob/v2p1/profile` | Perfil del usuario (requiere Bearer) |
-| `PUT` | `/ob/v2p1/profile` | Actualizar perfil (requiere Bearer) |
-| `GET` | `/ob/v2p1/assertions` | Listar badges de la mochila (requiere Bearer) |
-| `POST` | `/ob/v2p1/assertions` | Importar una badge desde Moodle (requiere Bearer) |
-| `DELETE` | `/ob/v2p1/assertions/:id` | Eliminar una badge (requiere Bearer) |
-| `GET` | `/health` | Health check |
+1. **Preferencias → Badges → Configuración de mochila**
+2. Seleccionar `backpack.infraestructuragis.com`
+3. Clic "Conectar"
+4. Introducir email y nombre → "Permitir acceso" ✅
 
 ---
 
 ## Estructura del proyecto
 
 ```
-backpack-server/
+/home2/backpacklms/
 ├── package.json
-├── .env.example
-├── .env                          ← (creado por ti, no se mete al repo)
+├── .env                          ← tu configuración (no en git)
+├── .env.example                  ← plantilla
+├── apache-vhost-backpack.conf    ← config Apache
 ├── data/
-│   └── backpack.db               ← (generado automáticamente)
+│   └── backpack.db               ← SQLite (se crea automáticamente)
 ├── src/
-│   ├── app.js                    ← Entry point
+│   ├── app.js                    ← entry point
 │   ├── db/
-│   │   └── init.js               ← Esquema SQLite
+│   │   └── init.js               ← esquema SQLite
 │   ├── middleware/
-│   │   └── oauth.js              ← Generación/validación de tokens y middleware Bearer
+│   │   └── oauth.js              ← tokens y middleware Bearer
 │   └── routes/
-│       ├── discovery.js          ← Manifest + registro de clientes
-│       ├── oauth.js              ← Authorize + Token endpoints
-│       └── badgeconnect.js       ← Profile + Assertions (el API real)
-└── README.md
+│       ├── discovery.js          ← manifest + registro
+│       ├── oauth.js              ← authorize + token
+│       └── badgeconnect.js       ← API de badges
+└── scripts/
+    ├── setup.js                  ← asistente de configuración
+    └── find-available-port.sh    ← detecta puerto libre
+```
+
+---
+
+## Endpoints
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/.well-known/badgeconnect.json` | Manifest (Moodle lo descarga al registrar) |
+| POST | `/register` | Registro dinámico de clientes (RFC 7591) |
+| GET | `/oauth/authorize` | Pantalla de consentimiento |
+| POST | `/oauth/token` | Intercambio de tokens |
+| GET | `/ob/v2p1/profile` | Perfil del usuario 🔒 |
+| PUT | `/ob/v2p1/profile` | Actualizar perfil 🔒 |
+| GET | `/ob/v2p1/assertions` | Listar badges 🔒 |
+| POST | `/ob/v2p1/assertions` | Importar badge desde Moodle 🔒 |
+| DELETE | `/ob/v2p1/assertions/:id` | Eliminar badge 🔒 |
+| GET | `/health` | Health check |
+
+🔒 = requiere Bearer token
+
+---
+
+## Comandos útiles
+
+```bash
+# Estado del servidor
+pm2 status
+pm2 logs backpack-lms
+pm2 restart backpack-lms
+
+# Apache
+sudo systemctl reload httpd
+sudo tail -f /var/log/httpd/backpack-ssl-error.log
+
+# Base de datos
+sqlite3 /home2/backpacklms/data/backpack.db
+.tables
+SELECT * FROM users;
+SELECT client_id, name FROM oauth_clients;
+.exit
+
+# Backup
+sqlite3 /home2/backpacklms/data/backpack.db .dump > backup_$(date +%Y%m%d).sql
 ```
 
 ---
 
 ## Troubleshooting
 
-**"Your site is not accessible from the Internet"**
-Este mensaje aparece en el LMS cuando no puede hacer GET a las assertions del issuer. Asegúrate de que tu LMS tenga una URL pública y que este backpack también sea accesible desde Internet.
+| Problema | Solución |
+|---|---|
+| Servidor no arranca | `pm2 logs backpack-lms --err` — revisar puerto en uso o permisos |
+| Apache no conecta | `sudo setsebool -P httpd_can_network_connect 1` (SELinux) |
+| "Site not accessible" en Moodle | Verificar que `/.well-known/badgeconnect.json` responde desde Internet |
+| OAuth loop infinito | Verificar `redirect_uris` en `oauth_clients` de la BD SQLite |
+| Badges no se envían | Activar debug en Moodle (`$CFG->debug = E_ALL`) y revisar logs |
 
-**El registro dinámico falla**
-Verifica que `ALLOW_DYNAMIC_REGISTRATION=true` en el `.env` y que el servidor esté corriendo. Revisa la consola del servidor para ver si recibe el `POST /register`.
+---
 
-**"connected" pero no aparecen badges al hacer push**
-Habilita debug en tu LMS (`$CFG->debugdisplay = 1`) y revisa los logs. El problema más común es que la URL de la assertion que LMS envía no es accesible desde el backpack (subnets, firewalls, etc.).
+## Seguridad
 
-**El OAuth dance no termina**
-Revisa que el `redirect_uri` que LMS envía coincida exactamente con uno de los registrados en `oauth_clients.redirect_uris` (incluyendo protocolo y Puerto).
+- OAuth 2 Authorization Code Flow
+- HTTPS obligatorio (Let's Encrypt)
+- Tokens con expiración (access: 1h, refresh: 30 días)
+- CORS restrictivo (solo desde Moodle)
+- PM2 corre como usuario no-root (`sgonzalez`)
+- SELinux compatible
 
 ---
 
 ## Licencia
 
-GNU GPL v3 o posterior — Compatible con el ecosistema de LMS cómo moodle.
+GNU GPL v3 — compatible con el ecosistema Moodle.
