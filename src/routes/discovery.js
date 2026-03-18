@@ -1,9 +1,4 @@
 'use strict';
-// ─── src/routes/discovery.js ─────────────────────────────────────────────────
-// GET  /.well-known/badgeconnect.json   → Badge Connect manifest
-// POST /register                        → Dynamic Client Registration (RFC 7591)
-// ─────────────────────────────────────────────────────────────────────────────
-
 const express = require('express');
 const router  = express.Router();
 const crypto  = require('crypto');
@@ -11,25 +6,29 @@ const { getDb } = require('../db/init');
 
 const PUBLIC_URL = process.env.PUBLIC_URL;
 
-// ── 1) Manifest ──────────────────────────────────────────────────────────────
+// ── 1) Manifest ───────────────────────────────────────────────────────────────
 router.get('/.well-known/badgeconnect.json', (req, res) => {
   res.json({
-    '@context':             'https://purl.imsglobal.org/spec/ob/v2p1/context/badgeconnect_v2p1.jsonld',
-    'type':                 'ServiceDescriptor',
-    'apiBase':              PUBLIC_URL,
-    'registrationEndpoint': `${PUBLIC_URL}/register`,
-    'authorizationEndpoint':`${PUBLIC_URL}/oauth/authorize`,
-    'tokenEndpoint':        `${PUBLIC_URL}/oauth/token`,
-    'profileEndpoint':      `${PUBLIC_URL}/ob/v2p1/profile`,
-    'assertionsEndpoint':   `${PUBLIC_URL}/ob/v2p1/assertions`,
-    'scopesSupported': [
-      'https://purl.imsglobal.org/spec/ob/v2p1/scope/assertion.read',
-      'https://purl.imsglobal.org/spec/ob/v2p1/scope/assertion.write',
-      'https://purl.imsglobal.org/spec/ob/v2p1/scope/profile.read',
-      'https://purl.imsglobal.org/spec/ob/v2p1/scope/profile.update'
-    ],
-    'grant_types_supported':    ['authorization_code'],
-    'response_types_supported': ['code']
+    '@context': 'https://purl.imsglobal.org/spec/ob/v2p1/context/badgeconnect_v2p1.jsonld',
+    'badgeConnectAPI': [
+      {
+        'apiBase':          PUBLIC_URL,
+        'name':             process.env.INSTITUTION_NAME || 'Backpack LMS',
+        'image':            '',
+        'registrationUrl':  `${PUBLIC_URL}/register`,
+        'authorizationUrl': `${PUBLIC_URL}/oauth/authorize`,
+        'tokenUrl':         `${PUBLIC_URL}/oauth/token`,
+        'profileUrl':       `${PUBLIC_URL}/ob/v2p1/profile`,
+        'assertionsUrl':    `${PUBLIC_URL}/ob/v2p1/assertions`,
+        'collectionsUrl':   `${PUBLIC_URL}/ob/v2p1/collections`,
+        'scopesOffered': [
+          'https://purl.imsglobal.org/spec/ob/v2p1/scope/assertion.read',
+          'https://purl.imsglobal.org/spec/ob/v2p1/scope/assertion.write',
+          'https://purl.imsglobal.org/spec/ob/v2p1/scope/profile.read',
+          'https://purl.imsglobal.org/spec/ob/v2p1/scope/profile.update'
+        ]
+      }
+    ]
   });
 });
 
@@ -38,7 +37,7 @@ router.post('/register', (req, res) => {
   if (process.env.ALLOW_DYNAMIC_REGISTRATION !== 'true') {
     return res.status(403).json({
       error: 'registration_not_permitted',
-      error_description: 'Dynamic registration is disabled. Register the client manually.'
+      error_description: 'Dynamic registration is disabled.'
     });
   }
 
