@@ -12,13 +12,13 @@ El LMS (educon) ya emite insignias internamente. Este servidor es donde los estu
 
 ```
 ┌─────────────────────┐   Badge Connect® (OAuth 2 + REST)    ┌─────────────────────┐
-│       Moodle        │ ──────────────────────────────────▶ │   Este Backpack     │
+│       LMS(moodle)   │ ──────────────────────────────────▶ │   Este Backpack     │
 │ educacioncontinua.  │                                      │ backpack.infraes-   │
 │      ucol.mx        │ ◀──────────────────────────────────  │ tructuragis.com     │
 │                     │   GET /ob/v2p1/assertions            │                     │
 │  Emite badges por   │                                      │  Almacena badges    │
 │  calificaciones,    │   El estudiante:                     │  que el estudiante  │
-│  criterios, roles   │   Preferencias → Badges →            │  "push" desde Moodle│
+│  criterios, roles   │   Preferencias → Badges →            │ "push" desde EduCon │
 └─────────────────────┘   "Conectar mochila"                 └─────────────────────┘
 ```
 
@@ -112,7 +112,7 @@ curl https://backpack.infraestructuragis.com/health
 
 ---
 
-## Registrar en Moodle (admin)
+## Registrar en EduCon (admin)
 
 1. **Admin → Servidor → Servicios OAuth 2**
    - Tipo: Open Badges
@@ -125,7 +125,7 @@ curl https://backpack.infraestructuragis.com/health
    - Versión: Open Badges v2.1
    - Servicio OAuth 2: (el del paso anterior)
 
-Moodle descarga el manifest y se registra solo.
+EduCon descarga el manifest y se registra solo.
 
 ---
 
@@ -169,14 +169,14 @@ Moodle descarga el manifest y se registra solo.
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/.well-known/badgeconnect.json` | Manifest (Moodle lo descarga al registrar) |
+| GET | `/.well-known/badgeconnect.json` | Manifest (EduCon lo descarga al registrar) |
 | POST | `/register` | Registro dinámico de clientes (RFC 7591) |
 | GET | `/oauth/authorize` | Pantalla de consentimiento |
 | POST | `/oauth/token` | Intercambio de tokens |
 | GET | `/ob/v2p1/profile` | Perfil del usuario 🔒 |
 | PUT | `/ob/v2p1/profile` | Actualizar perfil 🔒 |
 | GET | `/ob/v2p1/assertions` | Listar badges 🔒 |
-| POST | `/ob/v2p1/assertions` | Importar badge desde Moodle 🔒 |
+| POST | `/ob/v2p1/assertions` | Importar badge desde EduCon 🔒 |
 | DELETE | `/ob/v2p1/assertions/:id` | Eliminar badge 🔒 |
 | GET | `/health` | Health check |
 
@@ -215,9 +215,9 @@ sqlite3 /home2/backpacklms/data/backpack.db .dump > backup_$(date +%Y%m%d).sql
 |---|---|
 | Servidor no arranca | `pm2 logs backpack-lms --err` — revisar puerto en uso o permisos |
 | Apache no conecta | `sudo setsebool -P httpd_can_network_connect 1` (SELinux) |
-| "Site not accessible" en Moodle | Verificar que `/.well-known/badgeconnect.json` responde desde Internet |
+| "Site not accessible" en EduCon | Verificar que `/.well-known/badgeconnect.json` responde desde Internet |
 | OAuth loop infinito | Verificar `redirect_uris` en `oauth_clients` de la BD SQLite |
-| Badges no se envían | Activar debug en Moodle (`$CFG->debug = E_ALL`) y revisar logs |
+| Badges no se envían | Activar debug en EduCon (`$CFG->debug = E_ALL`) y revisar logs |
 
 ---
 
@@ -226,7 +226,7 @@ sqlite3 /home2/backpacklms/data/backpack.db .dump > backup_$(date +%Y%m%d).sql
 - OAuth 2 Authorization Code Flow
 - HTTPS obligatorio (Let's Encrypt)
 - Tokens con expiración (access: 1h, refresh: 30 días)
-- CORS restrictivo (solo desde Moodle)
+- CORS restrictivo (solo desde EduCon)
 - PM2 corre como usuario no-root (`sgonzalez`)
 - SELinux compatible
 
@@ -234,4 +234,4 @@ sqlite3 /home2/backpacklms/data/backpack.db .dump > backup_$(date +%Y%m%d).sql
 
 ## Licencia
 
-GNU GPL v3 — compatible con el ecosistema Moodle.
+GNU GPL v3 — compatible con el ecosistema LMS (moodle).
