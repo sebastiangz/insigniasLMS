@@ -1,4 +1,4 @@
-# Moodle Open Badges 2.1 — Backpack Server
+# LMS Open Badges 2.1 — Backpack Server
 
 Un servidor de **mochila (backpack)** propio, compatible con el estándar **Open Badges 2.1 / Badge Connect®**, diseñado para registrarse directamente en un LMS cómo moodle 4.x como un backpack externo.
 
