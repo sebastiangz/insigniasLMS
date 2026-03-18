@@ -35,7 +35,7 @@ console.log(`
 
   // Puerto
   console.log('\n3. PUERTO INTERNO\n');
-  const port = await ask('   Puerto [3100]: ') || '3100';
+  const port = await ask('   Puerto [3600]: ') || '3600';
 
   // Ruta BD
   console.log('\n4. RUTA DE LA BASE DE DATOS SQLite\n');
