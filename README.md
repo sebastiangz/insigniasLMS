@@ -2,15 +2,15 @@
 
 Un servidor de **mochila (backpack)** propio, compatible con el estándar **Open Badges 2.1 / Badge Connect®**, diseñado para registrarse directamente en Moodle 4.x como un backpack externo.
 
-Moodle ya emite insignias internamente (por calificaciones, actividades, criterios manuales, etc.). Este servidor es el lugar donde los estudiantes almacenan esas insignias de forma portátil y verificable, sin depender de servicios externos como Badgr.
+LMS cómo moodle ya emite insignias internamente (por calificaciones, actividades, criterios manuales, etc.). Este servidor es el lugar donde los estudiantes almacenan esas insignias de forma portátil y verificable, sin depender de servicios externos como Badgr.
 
 ---
 
 ## Cómo encaja en Moodle
 
 ```
-┌─────────────────────┐        Badge Connect®          ┌──────────────────────┐
-│       Moodle        │  (OAuth 2 + REST)              │   Este Backpack      │
+┌─────────────────────┐        Badge Connect®           ┌──────────────────────┐
+│       Moodle        │  (OAuth 2 + REST)               │   Este Backpack      │
 │                     │ ──────────────────────────────▶ │                      │
 │  Emite badges según │                                 │  Almacena las badges │
 │  calificaciones,    │ ◀────────────────────────────── │  que los estudiantes │
@@ -39,7 +39,7 @@ Moodle ya emite insignias internamente (por calificaciones, actividades, criteri
 ## Requisitos
 
 - **Node.js 18+**
-- Un dominio público con HTTPS (ejemplo: `backpack.educacioncontinua.ucol.mx`)
+- Un dominio público con HTTPS (ejemplo: `backpack.infraestructuragis.com`)
 - Moodle 4.0+ (tiene soporte nativo de Open Badges 2.1)
 - Puerto 3001 (configurable) habilitado en el firewall
 
