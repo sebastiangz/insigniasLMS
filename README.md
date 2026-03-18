@@ -1,6 +1,6 @@
 # Moodle Open Badges 2.1 — Backpack Server
 
-Un servidor de **mochila (backpack)** propio, compatible con el estándar **Open Badges 2.1 / Badge Connect®**, diseñado para registrarse directamente en Moodle 4.x como un backpack externo.
+Un servidor de **mochila (backpack)** propio, compatible con el estándar **Open Badges 2.1 / Badge Connect®**, diseñado para registrarse directamente en un LMS cómo moodle 4.x como un backpack externo.
 
 LMS cómo moodle ya emite insignias internamente (por calificaciones, actividades, criterios manuales, etc.). Este servidor es el lugar donde los estudiantes almacenan esas insignias de forma portátil y verificable, sin depender de servicios externos como Badgr.
 
@@ -82,13 +82,13 @@ pm2 startup          # para que arranque al reiniciar el servidor
 | Variable | Ejemplo | Descripción |
 |---|---|---|
 | `PORT` | `3001` | Puerto en que escucha el servidor |
-| `PUBLIC_URL` | `https://backpack.educacioncontinua.ucol.mx` | URL pública **sin** trailing slash. Aparece en los JSON de Open Badges |
+| `PUBLIC_URL` | `https://backpack.dominio` | URL pública **sin** trailing slash. Aparece en los JSON de Open Badges |
 | `DB_PATH` | `./data/backpack.db` | Ruta al archivo SQLite |
 | `JWT_SECRET` | `(genera uno)` | Secreto para firmar tokens. Genera con: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
 | `ACCESS_TOKEN_TTL` | `3600` | Vida del access_token en segundos |
 | `REFRESH_TOKEN_TTL` | `2592000` | Vida del refresh_token (30 días) |
 | `ALLOW_DYNAMIC_REGISTRATION` | `true` | Si es `true`, cualquier Consumer puede registrarse automáticamente |
-| `MOODLE_ORIGIN` | `https://educacioncontinua.ucol.mx` | URL de tu Moodle, para CORS |
+| `MOODLE_ORIGIN` | `https://dominio` | URL de tu LMS, para CORS |
 
 ---
 
@@ -97,7 +97,7 @@ pm2 startup          # para que arranque al reiniciar el servidor
 ```nginx
 server {
     listen 443 ssl;
-    server_name backpack.educacioncontinua.ucol.mx;
+    server_name backpack.dominio;
 
     ssl_certificate     /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
@@ -120,20 +120,20 @@ Esto es lo que hace el administrador de Moodle **una sola vez**:
 
 1. **Administración del sitio → Servidor → Servicios OAuth 2**
    - Crear un nuevo servicio de tipo **Open Badges**.
-   - **Service base URL:** `https://backpack.educacioncontinua.ucol.mx`
+   - **Service base URL:** `https://backpack.dominio`
    - Dejar `Client ID` y `Client secret` vacíos (se generan automáticamente al crear el backpack si tienes registro dinámico habilitado).
 
 2. **Administración del sitio → Badges → Gestionar mochila**
    - Clicar **"Agregar una nueva mochila"**.
-   - **Backpack URL:** `https://backpack.educacioncontinua.ucol.mx`
-   - **Backpack API URL:** `https://backpack.educacioncontinua.ucol.mx`
+   - **Backpack URL:** `https://backpack.dominio`
+   - **Backpack API URL:** `https://backpack.dominio`
    - **Versión API soportada:** Open Badges v2.1
    - **Servicio OAuth 2:** seleccionar el que creaste en el paso anterior.
    - Guardar.
 
 3. Moodle hará automáticamente:
-   - `GET https://backpack.educacioncontinua.ucol.mx/.well-known/badgeconnect.json` → obtiene el manifest.
-   - `POST https://backpack.educacioncontinua.ucol.mx/register` → se registra como Consumer y recibe su `client_id` y `client_secret`.
+   - `GET https://backpack.dominio/.well-known/badgeconnect.json` → obtiene el manifest.
+   - `POST https://backpack.dominio/register` → se registra como Consumer y recibe su `client_id` y `client_secret`.
 
 4. **Verificar:** Ve a **Administración → Badges → Configuración de badges** y confirma que aparezca tu backpack en la lista.
 
@@ -184,19 +184,19 @@ backpack-server/
 ## Troubleshooting
 
 **"Your site is not accessible from the Internet"**
-Este mensaje aparece en Moodle cuando no puede hacer GET a las assertions del issuer. Asegúrate de que tu Moodle tenga una URL pública y que este backpack también sea accesible desde Internet.
+Este mensaje aparece en el LMS cuando no puede hacer GET a las assertions del issuer. Asegúrate de que tu LMS tenga una URL pública y que este backpack también sea accesible desde Internet.
 
 **El registro dinámico falla**
 Verifica que `ALLOW_DYNAMIC_REGISTRATION=true` en el `.env` y que el servidor esté corriendo. Revisa la consola del servidor para ver si recibe el `POST /register`.
 
 **"connected" pero no aparecen badges al hacer push**
-Habilita debug en Moodle (`$CFG->debugdisplay = 1`) y revisa los logs. El problema más común es que la URL de la assertion que Moodle envía no es accesible desde el backpack (subnets, firewalls, etc.).
+Habilita debug en tu LMS (`$CFG->debugdisplay = 1`) y revisa los logs. El problema más común es que la URL de la assertion que LMS envía no es accesible desde el backpack (subnets, firewalls, etc.).
 
 **El OAuth dance no termina**
-Revisa que el `redirect_uri` que Moodle envía coincida exactamente con uno de los registrados en `oauth_clients.redirect_uris` (incluyendo protocolo y Puerto).
+Revisa que el `redirect_uri` que LMS envía coincida exactamente con uno de los registrados en `oauth_clients.redirect_uris` (incluyendo protocolo y Puerto).
 
 ---
 
 ## Licencia
 
-GNU GPL v3 o posterior — Compatible con el ecosistema de Moodle.
+GNU GPL v3 o posterior — Compatible con el ecosistema de LMS cómo moodle.
