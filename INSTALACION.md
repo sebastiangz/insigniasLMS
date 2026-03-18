@@ -34,7 +34,7 @@ sudo chown -R $USER:$USER /var/www/insignias-ucol
 
 ### Paso 2: Subir los archivos
 
-Los archivos descargados de Claude tienen estos nombres:
+Los archivos tienen estos nombres:
 
 ```
 insignias-ucol_package.json      → package.json
