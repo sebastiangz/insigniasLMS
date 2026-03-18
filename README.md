@@ -69,7 +69,7 @@ nano .env
 Variables clave en `.env`:
 
 ```bash
-PORT=3100
+PORT=3600
 PUBLIC_URL=https://backpack.infraestructuragis.com
 DB_PATH=/home2/backpacklms/data/backpack.db
 JWT_SECRET=<genera con: openssl rand -hex 48>
