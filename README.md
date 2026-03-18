@@ -1,6 +1,6 @@
 # Backpack LMS — Open Badges 2.1
 
-Servidor de **mochila (backpack)** institucional compatible con **Open Badges 2.1 / Badge Connect®**, diseñado para integrarse con Moodle 4.x como backpack externo.
+Servidor de **mochila (backpack)** institucional compatible con **Open Badges 2.1 / Badge Connect®**, diseñado para integrarse con el LMS (moodle 4.x) como backpack externo.
 
 **InfraestructuraGIS + Universidad de Colima**
 
@@ -8,17 +8,17 @@ Servidor de **mochila (backpack)** institucional compatible con **Open Badges 2.
 
 ## ¿Qué hace?
 
-Moodle ya emite insignias internamente. Este servidor es donde los estudiantes **almacenan esas insignias de forma portátil y verificable**, sin depender de servicios externos como Badgr.
+El LMS (educon) ya emite insignias internamente. Este servidor es donde los estudiantes **almacenan esas insignias de forma portátil y verificable**, sin depender de servicios externos como Badgr.
 
 ```
-┌─────────────────────┐   Badge Connect® (OAuth 2 + REST)   ┌─────────────────────┐
-│       Moodle        │ ─────────────────────────────────▶  │   Este Backpack     │
+┌─────────────────────┐   Badge Connect® (OAuth 2 + REST)    ┌─────────────────────┐
+│       Moodle        │ ──────────────────────────────────▶ │   Este Backpack     │
 │ educacioncontinua.  │                                      │ backpack.infraes-   │
-│      ucol.mx        │ ◀───────────────────────────────── │ tructuragis.com     │
+│      ucol.mx        │ ◀──────────────────────────────────  │ tructuragis.com     │
 │                     │   GET /ob/v2p1/assertions            │                     │
 │  Emite badges por   │                                      │  Almacena badges    │
 │  calificaciones,    │   El estudiante:                     │  que el estudiante  │
-│  criterios, roles   │   Preferencias → Badges →           │  "push" desde Moodle│
+│  criterios, roles   │   Preferencias → Badges →            │  "push" desde Moodle│
 └─────────────────────┘   "Conectar mochila"                 └─────────────────────┘
 ```
 
