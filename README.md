@@ -2,7 +2,7 @@
 
 Servidor de **mochila (backpack)** institucional compatible con **Open Badges 2.1 / Badge Connect®**, diseñado para integrarse con el LMS (moodle 4.x) como backpack externo.
 
-**InfraestructuraGIS + Universidad de Colima**
+**InfraestructuraGIS + Tu aportación**
 
 ---
 
